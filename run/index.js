@@ -38,7 +38,7 @@ const play = async () => {
         // amount bet balance invalid (less than minimum balance required)
         await join(config.JOINER_2, packageObjectId, gameBoardObjectId, config.minimumBalanceRequired - 1);
     } catch (error) {
-        console.log(error);
+        console.log("Generated and handled error ~> ", error);
     }
     await join(config.JOINER_2, packageObjectId, gameBoardObjectId, 5000);
 
@@ -48,25 +48,25 @@ const play = async () => {
     await turnCardsOver(config.GAME_CREATOR, 1, 2);
 
     // wait 3 seconds before calling turn card over again
-    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 3000));
     await turnCardsOver(config.JOINER_1, 3, 4);
 
-    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 3000));
     await turnCardsOver(config.JOINER_2, 5, 6);
 
-    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 3000));
     await turnCardsOver(config.GAME_CREATOR, 7, 8);
 
-    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 3000));
     await turnCardsOver(config.JOINER_1, 9, 10);
 
-    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 3000));
     await turnCardsOver(config.JOINER_2, 11, 12);
 
-    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 3000));
     await turnCardsOver(config.GAME_CREATOR, 13, 14);
 
-    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 3000));
     await turnCardsOver(config.JOINER_1, 15, 16);
 }
 

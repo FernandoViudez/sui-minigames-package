@@ -148,8 +148,7 @@ module games::memotest {
                 image: string::utf8(vector[]),
                 location: 0,
                 per_location: 0,
-                found_by: @0x0,
-                room: string::utf8(vector[]),
+                found_by: @0x0
             };
             vector::push_back<Card>(&mut cards_vector, card);
             if(i == (TOTAL_CARDS - 1)) {
