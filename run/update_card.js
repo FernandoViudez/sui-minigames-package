@@ -5,7 +5,6 @@ import { provider } from "./provider.js";
 const keypair = Ed25519Keypair.fromSeed(fromB64(config.MEMOTEST_AUTHORIZED_ADDR.pk).slice(1));
 const signer = new RawSigner(keypair, provider);
 
-
 export const update_card = async (
     packageObjectId,
     configObjectId,
@@ -30,5 +29,5 @@ export const update_card = async (
         ],
         gasBudget: 10000,
     });
-    console.log("[Update card]", moveCallTxn.effects.effects.status);
+    console.log("[Server Update card]", moveCallTxn.effects.effects.status);
 }

@@ -5,8 +5,8 @@ export const config = {
         pk: "ACQviO8MJM/gf5IMqTRWMn+B6OuUu8074eDy8ArqujI7",
     },
     MEMOTEST_AUTHORIZED_ADDR: {
-        addr: "0xccafb9b1327f0ee3b52d615b9235e5cc0b8db126",
-        pk: "AM8iZlWgo2/Tk2XH+3E2KXrYVoQNCTe/IQ/B+mRBE9iK",
+        addr: "0x6d89aa1dcfc52e1be351ab9cb906e7b116804a51",
+        pk: "ACQviO8MJM/gf5IMqTRWMn+B6OuUu8074eDy8ArqujI7",
     },
     GAME_CREATOR: {
         addr: "0xb44e67e4575adfd0d72a517624281eb2a8f8c9f3",
@@ -20,4 +20,8 @@ export const config = {
         addr: "0xccafb9b1327f0ee3b52d615b9235e5cc0b8db126",
         pk: "AM8iZlWgo2/Tk2XH+3E2KXrYVoQNCTe/IQ/B+mRBE9iK"
     },
+    // JOINER_3: {
+    //     addr: "0x34d82cf4c1492e71efd69098815e35fdda1d3a98",
+    //     pk: "APfQaszBI6JbOuQ9AJAC4eNlSy0ShSrWZf3bVCpeDB+j"
+    // },
 }

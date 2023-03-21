@@ -28,8 +28,7 @@ module games::memotest {
         image: String,
         location: u8,
         per_location: u8,
-        found_by: address,
-        room: String,
+        found_by: address
     }
 
     struct Player has store {
@@ -220,10 +219,17 @@ module games::memotest {
         let first_card_position: u8 = vector::pop_back(&mut cards_location);
 
         // check that the location for the first card sent is correct 
-        assert!(first_card_turned.location == first_card_position, EBadRequest);
+        assert!(
+            first_card_turned.location == first_card_position || 
+            first_card_turned.per_location == first_card_position, 
+            EBadRequest
+        );
 
-        // check that the location for the per of first card sent is correct and matches 
-        if(first_card_turned.per_location == second_card_position) {
+        // check that the second position sent correspond to the same card
+        if(
+            first_card_turned.per_location == second_card_position || 
+            first_card_turned.location == second_card_position
+        ) {
             first_card_turned.found_by = sender;
             gameBoard.cards_found = gameBoard.cards_found + 1;
         };
@@ -233,7 +239,7 @@ module games::memotest {
         };
 
         // change turn
-        if(gameBoard.who_plays == vector::length(&gameBoard.players)) {
+        if((gameBoard.who_plays as u64) == vector::length(&gameBoard.players)) {
             gameBoard.who_plays = 1;
         } else {
             gameBoard.who_plays = gameBoard.who_plays + 1;

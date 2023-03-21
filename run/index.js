@@ -31,6 +31,7 @@ const play = async () => {
     gameBoardObjectId = await newGame(packageObjectId, configObjectId, 1000);
 
     console.log("gameBoardObjectId ~> ", gameBoardObjectId);
+    console.log("configObjectId ~> ", configObjectId);
 
     await join(config.JOINER_1, packageObjectId, gameBoardObjectId, 1500);
     try {
@@ -44,13 +45,29 @@ const play = async () => {
     await startGame(packageObjectId, gameBoardObjectId);
 
     // turn over first and last cards
-    await turnCardsOver(config.GAME_CREATOR, 1, 8);
-    try {
-        await turnCardsOver(config.GAME_CREATOR, 2, 8);
-    } catch (error) {
-        console.error(error)
-    }
-    await turnCardsOver(config.JOINER_1, 2, 5);
+    await turnCardsOver(config.GAME_CREATOR, 1, 2);
+
+    // wait 3 seconds before calling turn card over again
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await turnCardsOver(config.JOINER_1, 3, 4);
+
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await turnCardsOver(config.JOINER_2, 5, 6);
+
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await turnCardsOver(config.GAME_CREATOR, 7, 8);
+
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await turnCardsOver(config.JOINER_1, 9, 10);
+
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await turnCardsOver(config.JOINER_2, 11, 12);
+
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await turnCardsOver(config.GAME_CREATOR, 13, 14);
+
+    await new Promise((resolve, reject) => setTimeout(() => { resolve() }, 10000));
+    await turnCardsOver(config.JOINER_1, 15, 16);
 }
 
 const turnCardsOver = async (fromAccount, position_1, position_2) => {
@@ -60,7 +77,8 @@ const turnCardsOver = async (fromAccount, position_1, position_2) => {
 
     console.log("[Turn card over]", {
         card_1,
-        card_2
+        card_2,
+        positions: [position_1, position_2],
     });
     console.log("[Turn card over]", card_1.id == card_2.id ? 'Match found' : "Not matches, keep trying");
 
@@ -80,7 +98,7 @@ const serverTurnOverCardProcess = async (fromAccount, positionChosen) => {
     }
 
     cards = cards.map(card => card.fields);
-    const possible_cards = cards.filter(card => card.found_by == '0x0000000000000000000000000000000000000000');
+    const possible_cards = cards.filter(card => card.found_by == '0x0000000000000000000000000000000000000000' && (!card.location || !card.per_location));
     let card = cards.find(card => card.location == positionChosen || card.per_location == positionChosen);
 
     if (!card) {
