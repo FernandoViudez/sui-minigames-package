@@ -217,10 +217,14 @@ module games::memotest {
         let second_card_position: u8 = vector::pop_back(&mut cards_location);
         let first_card_position: u8 = vector::pop_back(&mut cards_location);
 
-        // check that the location for the first card sent is correct 
+        // check that the location for the first card sent is correct
         assert!(
             first_card_turned.location == first_card_position || 
             first_card_turned.per_location == first_card_position, 
+            EBadRequest
+        );
+        assert!(
+            first_card_position != second_card_position,
             EBadRequest
         );
 
