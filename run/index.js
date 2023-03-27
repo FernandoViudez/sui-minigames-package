@@ -7,6 +7,7 @@ import { provider } from './provider.js';
 import { startGame } from './start_game.js';
 import { turn_over_card } from './turn_over_card.js';
 import { update_card } from './update_card.js';
+import { fund } from './_utils/fund.utils.js';
 
 var packageObjectId;
 var configObjectId;
@@ -31,6 +32,10 @@ const play = async () => {
     gameBoardObjectId = await newGame(packageObjectId, configObjectId, 1000);
 
     console.log("gameBoardObjectId ~> ", gameBoardObjectId);
+
+    await fund(config.JOINER_1.addr);
+    await fund(config.JOINER_2.addr);
+
     console.log("configObjectId ~> ", configObjectId);
 
     await join(config.JOINER_1, packageObjectId, gameBoardObjectId, 1500);

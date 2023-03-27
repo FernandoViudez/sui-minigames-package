@@ -18,6 +18,7 @@ module games::memotest {
     const EInvalidActionForCurrentState: u64 = 6;
     const ECantJoinTwice: u64 = 7;
     const ECardAlreadyFound: u64 = 8;
+    const EPrizeAlreadyClaimed: u64 = 9;
     const EUnauthorized: u64 = 401;
     const EBadRequest: u64 = 400;
 
@@ -267,41 +268,44 @@ module games::memotest {
     }
 
     entry fun claim_prize(gameBoard: &mut GameBoard, ctx: &mut TxContext) {
-        assert!(gameBoard.status == string::utf8(b"playing"), EInvalidActionForCurrentState);
+        assert!(gameBoard.status == string::utf8(b"finished"), EInvalidActionForCurrentState);
         let sender = tx_context::sender(ctx);
-        let winner = get_winner(gameBoard);
+        let winner = get_winner(&gameBoard.players);
         if(winner == @0x0) {
 
             // let each player claim the amount betted
             let player = get_player_from_address(&gameBoard.players, sender);
+            assert!(player.amount_betted != 0, EPrizeAlreadyClaimed);
+
             prize::transfer_prize(player.addr,option::some(player.amount_betted), &mut gameBoard.prize, ctx);
+            let player_mut = vector::borrow_mut(&mut gameBoard.players, (player.id as u64) - 1);
+            player_mut.amount_betted = 0;
 
         } else {
             assert!(sender == winner, EUnauthorized);
+            assert!(prize::is_claimed(&gameBoard.prize) == false, EPrizeAlreadyClaimed);
             prize::transfer_prize(winner, option::none(), &mut gameBoard.prize, ctx);
+            prize::update_prize(winner, &mut gameBoard.prize);
         };
     }
 
-    public fun get_winner(gameBoard: &mut GameBoard): address {
+    public fun get_winner(players: &vector<Player>): address {
         let i = 0;
         let winner = @0x0;
         let aux = 0;
         loop {
 
-            let player = vector::borrow_mut(&mut gameBoard.players, i);
-
-            if(player.found_amount > aux) {
-                winner = player.addr;
-                aux = player.found_amount;
-            };
+            let player = vector::borrow(players, i);
 
             if(aux != 0 && player.found_amount == aux) {
                 // tie, for now let all the players withdraw the coins
                 winner = @0x0;
-                break
+            } else if(player.found_amount > aux) {
+                winner = player.addr;
+                aux = player.found_amount;
             };
 
-            if((i + 1) == vector::length(&gameBoard.players)) {
+            if(i == (vector::length(players) - 1)) {
                 break
             };
             i = i + 1;

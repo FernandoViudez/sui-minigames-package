@@ -42,7 +42,14 @@ module games::prize {
             ctx,
         );
         transfer::transfer(new_coin, to);
-        // TODO: see what happens with "gamerboard.prize.reserve_coin"
+    }
 
+    public fun update_prize(new_winner: address, prize: &mut Prize) {
+        prize.winner = new_winner;
+        prize.claimed = true;
+    }
+
+    public fun is_claimed(prize: &Prize): bool {
+        return prize.claimed
     }
 }
