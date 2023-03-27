@@ -1,12 +1,12 @@
 export const config = {
     minimumBalanceRequired: 100,
     DEPLOYER: {
-        addr: "0x6d89aa1dcfc52e1be351ab9cb906e7b116804a51",
-        pk: "ACQviO8MJM/gf5IMqTRWMn+B6OuUu8074eDy8ArqujI7",
+        addr: "0xc648851ec4aa4f9afe6e96dbab2f114208268558",
+        pk: "AJ6VJJ9Lb11Sworh/YwocRr0vxD92CGLwCOU/4TKx2/e",
     },
     MEMOTEST_AUTHORIZED_ADDR: {
-        addr: "0x6d89aa1dcfc52e1be351ab9cb906e7b116804a51",
-        pk: "ACQviO8MJM/gf5IMqTRWMn+B6OuUu8074eDy8ArqujI7",
+        addr: "0xc648851ec4aa4f9afe6e96dbab2f114208268558",
+        pk: "AJ6VJJ9Lb11Sworh/YwocRr0vxD92CGLwCOU/4TKx2/e",
     },
     GAME_CREATOR: {
         addr: "0xb44e67e4575adfd0d72a517624281eb2a8f8c9f3",

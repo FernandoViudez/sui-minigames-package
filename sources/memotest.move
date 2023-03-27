@@ -1,14 +1,14 @@
 module games::memotest {
-    use sui::object::{Self, ID, UID};
+    use sui::object::{Self, UID};
     use sui::transfer;
-    use sui::balance::{Self, Balance};
+    use sui::balance::{Self};
     use sui::sui::SUI;
     use sui::coin::{Self, Coin};
     use sui::tx_context::{Self, TxContext};
     use std::string::{Self, String};
     use std::vector;
     use games::prize::{Self, Prize};
-    use std::option::{Self, Option};
+    use std::option::{Self};
 
     const EConfigAlreadyInitialized: u64 = 1;
     const EIncorrectMinimumBetAmount: u64 = 2;
@@ -33,12 +33,13 @@ module games::memotest {
 
     struct Player has store {
         id: u8,
-        addr: address
+        addr: address,
+        amount_betted: u64,
+        found_amount: u8,
     }
 
     struct GameBoard has key {
         id: UID,
-        room: String,
         cards: vector<Card>,
         players: vector<Player>,
         status: String,
@@ -102,7 +103,7 @@ module games::memotest {
         card_to_update.image = string::utf8(new_image);
     }
 
-    entry fun new_game(config: &mut GameConfig, room: vector<u8>, bet: &mut Coin<SUI>, ctx: &mut TxContext) {
+    entry fun new_game(config: &mut GameConfig, bet: &mut Coin<SUI>, ctx: &mut TxContext) {
         assert!(config.minimum_bet_amount != 0, EContractNotInitialized);
 
         let sender = tx_context::sender(ctx);
@@ -119,11 +120,12 @@ module games::memotest {
 
         let gameBoard = GameBoard {
             id: object::new(ctx),
-            room: string::utf8(room),
             cards: create_empty_cards(),
             players: vector[Player {
                 id: 1,
-                addr: sender
+                addr: sender,
+                amount_betted: bet_amount,
+                found_amount: 0
             }],
             status: string::utf8(b"waiting"),
             cards_found: 0,
@@ -185,6 +187,8 @@ module games::memotest {
         let new_player = Player {
             id: (players_number as u8) + 1,
             addr: tx_context::sender(ctx),
+            amount_betted: bet_amount,
+            found_amount: 0
         };
         vector::push_back(&mut gameBoard.players, new_player);
 
@@ -235,6 +239,7 @@ module games::memotest {
         ) {
             first_card_turned.found_by = sender;
             gameBoard.cards_found = gameBoard.cards_found + 1;
+            players_turn.found_amount = players_turn.found_amount + 1;
         };
         
         if(gameBoard.cards_found == 8) {
@@ -259,6 +264,67 @@ module games::memotest {
         } else {
             gameBoard.who_plays = gameBoard.who_plays + 1;
         };
+    }
+
+    entry fun claim_prize(gameBoard: &mut GameBoard, ctx: &mut TxContext) {
+        assert!(gameBoard.status == string::utf8(b"playing"), EInvalidActionForCurrentState);
+        let sender = tx_context::sender(ctx);
+        let winner = get_winner(gameBoard);
+        if(winner == @0x0) {
+
+            // let each player claim the amount betted
+            let player = get_player_from_address(&gameBoard.players, sender);
+            prize::transfer_prize(player.addr,option::some(player.amount_betted), &mut gameBoard.prize, ctx);
+
+        } else {
+            assert!(sender == winner, EUnauthorized);
+            prize::transfer_prize(winner, option::none(), &mut gameBoard.prize, ctx);
+        };
+    }
+
+    public fun get_winner(gameBoard: &mut GameBoard): address {
+        let i = 0;
+        let winner = @0x0;
+        let aux = 0;
+        loop {
+
+            let player = vector::borrow_mut(&mut gameBoard.players, i);
+
+            if(player.found_amount > aux) {
+                winner = player.addr;
+                aux = player.found_amount;
+            };
+
+            if(aux != 0 && player.found_amount == aux) {
+                // tie, for now let all the players withdraw the coins
+                winner = @0x0;
+                break
+            };
+
+            if((i + 1) == vector::length(&gameBoard.players)) {
+                break
+            };
+            i = i + 1;
+        };
+        return winner
+    }
+
+    public fun get_player_from_address(players: &vector<Player>, sender: address): &Player {
+        let i = 0;
+        let player;
+        loop {
+
+            let player_borrow: &Player = vector::borrow(players, i);
+
+            if(player_borrow.addr == sender) {
+                player = player_borrow;
+                break
+            };
+
+
+            i = i + 1;
+        };
+        return player
     }
 
 

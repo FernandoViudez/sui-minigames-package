@@ -16,7 +16,6 @@ export const newGame = async (packageObjectId, configObjectId, amountToBet) => {
         typeArguments: [],
         arguments: [
             configObjectId,
-            "A123",
             coinForBet,
         ],
         gasBudget: 10000,

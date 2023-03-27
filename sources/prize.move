@@ -1,8 +1,10 @@
 module games::prize {
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
+    use sui::transfer;
     use sui::tx_context::{Self, TxContext};
-    use sui::balance::{Self, Balance};
+    use sui::balance::{Self};
+    use std::option::{Self, Option};
     struct Prize has store {
         winner: address,
         reserve_coin: Coin<SUI>,
@@ -26,5 +28,21 @@ module games::prize {
             ctx,
         );
         coin::join(&mut prize.reserve_coin, new_coin);
+    }
+
+    public fun transfer_prize(to: address, amount: Option<u64>, prize: &mut Prize, ctx: &mut TxContext) {
+        let balance = coin::balance_mut(&mut prize.reserve_coin);
+        let full_amount = balance::value(balance);
+        if(option::is_some(&amount)) {
+            full_amount = option::extract<u64>(&mut amount);
+        };
+        let new_coin = coin::take<SUI>(
+            balance,
+            full_amount,
+            ctx,
+        );
+        transfer::transfer(new_coin, to);
+        // TODO: see what happens with "gamerboard.prize.reserve_coin"
+
     }
 }
