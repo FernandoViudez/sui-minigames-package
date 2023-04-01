@@ -1,3 +1,4 @@
+import { TransactionBlock } from "@mysten/sui.js";
 import { provider } from "../provider.js"
 
 // if there is no coin with the required amount to bet, join them. otherwise, split
@@ -7,7 +8,7 @@ export const getCoin = async (from, balanceRequired, signer) => {
     let totalFunds = 0;
     for (let [i, coin] of coins.entries()) {
         if (coin.balance >= balanceRequired) {
-            const newCoin = await splitCoin(coin.coinObjectId, balanceRequired, signer);
+            const newCoin = await splitCoin(balanceRequired, signer);
             return newCoin;
         }
         if (totalFunds >= balanceRequired) {
@@ -23,13 +24,12 @@ export const getCoin = async (from, balanceRequired, signer) => {
     throw new Error("Not enough funds for bet amount");
 }
 
-const splitCoin = async (coinObjectId, requiredBalance, signer) => {
-    const splitTxn = await signer.splitCoin({
-        coinObjectId,
-        splitAmounts: [requiredBalance],
-        gasBudget: 1000,
-    });
-    return splitTxn.effects.effects.created[0].reference.objectId;
+const splitCoin = async (requiredBalance, signer) => {
+    const tx = new TransactionBlock();
+    const [coin] = tx.splitCoins(tx.gas, tx.pure(requiredBalance));
+    tx.transferObjects([coin], tx.pure(await signer.getAddress()));
+    const result = await signer.signAndExecuteTransactionBlock({ transactionBlock: tx });
+    return result.effects.created[0].reference.objectId;
 }
 
 const mergeCoins = async (coinsObjectId, requiredBalance, signer) => {
@@ -38,11 +38,11 @@ const mergeCoins = async (coinsObjectId, requiredBalance, signer) => {
     if (!coinToMerge) {
         return primaryCoin;
     }
-    await signer.mergeCoin({
-        primaryCoin,
-        coinToMerge,
-        gasBudget: 1000,
-    });
+    const tx = new TransactionBlock();
+    tx.mergeCoin(tx.object(primaryCoin), [
+        tx.object(coinToMerge),
+    ]);
+    await signer.signAndExecuteTransactionBlock({ transactionBlock: tx });
     coinsObjectId.push(primaryCoin);
     await mergeCoins(coinsObjectId, requiredBalance, signer);
 }

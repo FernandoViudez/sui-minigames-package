@@ -8,7 +8,7 @@ module games::memotest {
     use std::string::{Self, String};
     use std::vector;
     use games::prize::{Self, Prize};
-    use std::option::{Self};
+    use std::option::{Self, Option};
 
     const EConfigAlreadyInitialized: u64 = 1;
     const EIncorrectMinimumBetAmount: u64 = 2;
@@ -19,6 +19,9 @@ module games::memotest {
     const ECantJoinTwice: u64 = 7;
     const ECardAlreadyFound: u64 = 8;
     const EPrizeAlreadyClaimed: u64 = 9;
+    const EInvalidPlayerQuantity: u64 = 10;
+    const ECantLeaveGame: u64 = 11;
+    const EPlayerNotFound: u64 = 12;
     const EUnauthorized: u64 = 401;
     const EBadRequest: u64 = 400;
 
@@ -32,14 +35,15 @@ module games::memotest {
         found_by: address
     }
 
-    struct Player has store {
+    struct Player has store, drop {
         id: u8,
         addr: address,
         amount_betted: u64,
         found_amount: u8,
+        can_play: bool,
     }
 
-    struct GameBoard has key {
+    struct GameBoard has key, store {
         id: UID,
         cards: vector<Card>,
         players: vector<Player>,
@@ -66,7 +70,7 @@ module games::memotest {
             authorized_addr: sender,
             creator: sender,
         };
-        transfer::share_object(config);
+        transfer::public_share_object(config);
     }
 
     entry fun initialize(
@@ -126,7 +130,8 @@ module games::memotest {
                 id: 1,
                 addr: sender,
                 amount_betted: bet_amount,
-                found_amount: 0
+                found_amount: 0,
+                can_play: true
             }],
             status: string::utf8(b"waiting"),
             cards_found: 0,
@@ -139,7 +144,7 @@ module games::memotest {
                 authorized_addr: config.authorized_addr,
             },
         };
-        transfer::share_object(gameBoard);
+        transfer::public_share_object(gameBoard);
     }
 
     fun create_empty_cards(): vector<Card> {
@@ -189,7 +194,8 @@ module games::memotest {
             id: (players_number as u8) + 1,
             addr: tx_context::sender(ctx),
             amount_betted: bet_amount,
-            found_amount: 0
+            found_amount: 0,
+            can_play: true
         };
         vector::push_back(&mut gameBoard.players, new_player);
 
@@ -203,12 +209,6 @@ module games::memotest {
         gameBoard.status = string::utf8(b"playing");
     }
 
-    /*
-        Client sends:
-            - gameBoard object id
-            - card_id: first turned over card by client
-            - cards_location: location of the first and second cards turned over 
-    */
     entry fun turn_card_over(gameBoard: &mut GameBoard, card_id: u8, cards_location: vector<u8>, ctx: &mut TxContext) {
         assert!(gameBoard.status == string::utf8(b"playing"), EInvalidActionForCurrentState);
 
@@ -243,28 +243,41 @@ module games::memotest {
             players_turn.found_amount = players_turn.found_amount + 1;
         };
         
-        if(gameBoard.cards_found == 8) {
+        if((gameBoard.cards_found as u64) == TOTAL_CARDS) {
             gameBoard.status = string::utf8(b"finished");
         };
 
         // change turn
-        if((gameBoard.who_plays as u64) == vector::length(&gameBoard.players)) {
-            gameBoard.who_plays = 1;
-        } else {
-            gameBoard.who_plays = gameBoard.who_plays + 1;
-        };
+        update_who_plays(gameBoard, ctx);
     }
 
     entry fun change_turn(gameBoard: &mut GameBoard, ctx: &mut TxContext) {
         assert!(gameBoard.status == string::utf8(b"playing"), EInvalidActionForCurrentState);
-
         let sender = tx_context::sender(ctx);
         assert!(gameBoard.config.authorized_addr == sender, EUnauthorized);
-        if(gameBoard.who_plays == 4) {
-           gameBoard.who_plays = 1; 
-        } else {
-            gameBoard.who_plays = gameBoard.who_plays + 1;
-        };
+        update_who_plays(gameBoard, ctx);
+    }
+    
+    entry fun disconnect_player(gameBoard: &mut GameBoard, player_id: u8, ctx: &mut TxContext) {
+            let sender = tx_context::sender(ctx);
+            assert!(sender == gameBoard.config.authorized_addr, EUnauthorized);
+            let active_players = get_active_players_amount(&gameBoard.players);
+            assert!(active_players > 1, ECantLeaveGame);
+            let i = 0;
+            loop {
+                let player = vector::borrow_mut(&mut gameBoard.players, i);
+                if(player.id == player_id) {
+                    player.can_play = false;
+                    if(active_players == 2) {
+                        gameBoard.status = string::utf8(b"finished");
+                    };
+                    break
+                };
+                if(i == vector::length(&gameBoard.players)) {
+                    break
+                };
+                i = i + 1;
+            };
     }
 
     entry fun claim_prize(gameBoard: &mut GameBoard, ctx: &mut TxContext) {
@@ -282,14 +295,16 @@ module games::memotest {
             player_mut.amount_betted = 0;
 
         } else {
-            assert!(sender == winner, EUnauthorized);
+            if(get_active_players_amount(&gameBoard.players) > 1) {
+                assert!(sender == winner, EUnauthorized);
+            };
             assert!(prize::is_claimed(&gameBoard.prize) == false, EPrizeAlreadyClaimed);
-            prize::transfer_prize(winner, option::none(), &mut gameBoard.prize, ctx);
-            prize::update_prize(winner, &mut gameBoard.prize);
+            prize::transfer_prize(sender, option::none(), &mut gameBoard.prize, ctx);
+            prize::update_prize(sender, &mut gameBoard.prize);
         };
     }
 
-    public fun get_winner(players: &vector<Player>): address {
+    fun get_winner(players: &vector<Player>): address {
         let i = 0;
         let winner = @0x0;
         let aux = 0;
@@ -313,22 +328,50 @@ module games::memotest {
         return winner
     }
 
-    public fun get_player_from_address(players: &vector<Player>, sender: address): &Player {
+    fun get_player_from_address(players: &vector<Player>, sender: address): &Player {
         let i = 0;
-        let player;
         loop {
-
             let player_borrow: &Player = vector::borrow(players, i);
-
             if(player_borrow.addr == sender) {
-                player = player_borrow;
+                return player_borrow
+            };
+            if(i == vector::length(players)) {
+                assert!(true == false, EPlayerNotFound);
                 break
             };
-
-
             i = i + 1;
         };
-        return player
+        vector::borrow(players, 0)
+    }
+
+    fun update_who_plays(gameBoard: &mut GameBoard, ctx: &mut TxContext) {
+        let sender = tx_context::sender(ctx);
+        assert!(get_active_players_amount(&gameBoard.players) >= 2, EInvalidPlayerQuantity);
+        if((gameBoard.who_plays as u64) == vector::length(&gameBoard.players)) {
+           gameBoard.who_plays = 1; 
+        } else {
+            gameBoard.who_plays = gameBoard.who_plays + 1;
+        };
+        let player = get_player_from_address(&gameBoard.players, sender);
+        if(!player.can_play) {
+            update_who_plays(gameBoard, ctx);
+        };
+    }
+
+    fun get_active_players_amount(players: &vector<Player>): u64 {
+        let active_players_amount = 0;
+        let i = 0;
+        loop {
+            let player = vector::borrow(players, i);
+            if(player.can_play) {
+                active_players_amount = active_players_amount + 1;
+            };
+            if(vector::length(players) == i) {
+                break
+            };
+            i = i + 1;
+        };
+        return active_players_amount
     }
 
 

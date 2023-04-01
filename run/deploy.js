@@ -1,4 +1,4 @@
-import { Ed25519Keypair, RawSigner, fromB64 } from '@mysten/sui.js';
+import { Ed25519Keypair, RawSigner, TransactionBlock, normalizeSuiObjectId, fromB64 } from '@mysten/sui.js';
 import { config } from "./config.js";
 import { provider } from "./provider.js";
 import { execSync } from 'child_process';
@@ -30,20 +30,31 @@ import { fund } from './_utils/fund.utils.js';
 * shared refers to the config object of the contract
 */
 export const deploy = async () => {
-    const keypair = Ed25519Keypair.fromSeed(fromB64(config.DEPLOYER.pk).slice(1));
+    const keypair = Ed25519Keypair.deriveKeypair(config.DEPLOYER.mnemonic, "m/44'/784'/0'/0'/0'");
     const signer = new RawSigner(keypair, provider);
-    await fund(
-        await signer.getAddress()
-    );
+    const signerAddress = await signer.getAddress();
+    await fund(signerAddress);
     const compiledModulesAndDeps = JSON.parse(
         execSync(
-            `sui move build --dump-bytecode-as-base64 --path ../`,
+            `sui move build --dump-bytecode-as-base64 --path ./`,
             { encoding: 'utf-8' },
         ),
     );
-    const publishTxn = await signer.publish({
-        compiledModules: compiledModulesAndDeps,
-        gasBudget: 10000,
+    const tx = new TransactionBlock();
+    tx.setGasBudget(10000000);
+    const res = tx.publish(
+        compiledModulesAndDeps.modules.map((m) => Array.from(fromB64(m))),
+        compiledModulesAndDeps.dependencies.map((addr) =>
+            normalizeSuiObjectId(addr),
+        ),
+    );
+    tx.transferObjects([res], tx.pure(signerAddress));
+    const result = await signer.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        options: {
+            showEffects: true,
+        }
     });
-    return publishTxn.effects.effects.created
+    console.log("[Deploy] succeed");
+    return result.effects.created;
 }

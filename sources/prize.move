@@ -41,7 +41,7 @@ module games::prize {
             full_amount,
             ctx,
         );
-        transfer::transfer(new_coin, to);
+        transfer::public_transfer(new_coin, to);
     }
 
     public fun update_prize(new_winner: address, prize: &mut Prize) {

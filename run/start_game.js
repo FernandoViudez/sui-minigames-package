@@ -1,20 +1,19 @@
-import { Ed25519Keypair, RawSigner, fromB64 } from '@mysten/sui.js';
+import { Ed25519Keypair, RawSigner, fromB64, TransactionBlock } from '@mysten/sui.js';
 import { config } from "./config.js";
 import { provider } from "./provider.js";
 
-const keypair = Ed25519Keypair.fromSeed(fromB64(config.GAME_CREATOR.pk).slice(1));
+const keypair = Ed25519Keypair.deriveKeypair(config.GAME_CREATOR.mnemonic, "m/44'/784'/0'/0'/0'");
 const signer = new RawSigner(keypair, provider);
 
 export const startGame = async (packageObjectId, gameBoardObjectId) => {
-    const moveCallTxn = await signer.executeMoveCall({
-        packageObjectId,
-        module: 'memotest',
-        function: 'start_game',
-        typeArguments: [],
+    const tx = new TransactionBlock();
+    tx.moveCall({
+        target: `${packageObjectId}::memotest::start_game`,
         arguments: [
-            gameBoardObjectId
-        ],
-        gasBudget: 10000,
-    });
-    console.log("[Start Game]", moveCallTxn.effects.effects.status);
+            tx.pure(gameBoardObjectId)
+        ]
+    })
+    tx.setGasBudget(10000);
+    const res = await signer.signAndExecuteTransactionBlock({ transactionBlock: tx });
+    console.log("[Start Game]", res.effects.status);
 }

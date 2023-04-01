@@ -1,21 +1,19 @@
 import { provider } from "./provider.js"
-import { Ed25519Keypair, RawSigner, fromB64 } from '@mysten/sui.js';
+import { Ed25519Keypair, RawSigner, TransactionBlock } from '@mysten/sui.js';
 
 export const turn_over_card = async (packageObjectId, gameBoardObjectId, account, cardId, cardsLocation) => {
-    const keypair = Ed25519Keypair.fromSeed(fromB64(account.pk).slice(1));
+    const keypair = Ed25519Keypair.deriveKeypair(account.mnemonic, "m/44'/784'/0'/0'/0'");
     const signer = new RawSigner(keypair, provider);
-
-    const moveCallTxn = await signer.executeMoveCall({
-        packageObjectId,
-        module: 'memotest',
-        function: 'turn_card_over',
-        typeArguments: [],
+    const tx = new TransactionBlock();
+    tx.moveCall({
+        target: `${packageObjectId}::memotest::turn_card_over`,
         arguments: [
-            gameBoardObjectId,
-            cardId,
-            cardsLocation
-        ],
-        gasBudget: 10000,
+            tx.pure(gameBoardObjectId),
+            tx.pure(cardId),
+            tx.pure(cardsLocation),
+        ]
     });
-    console.log("[Turn Over Card]", moveCallTxn.effects.effects.status);
+    tx.setGasBudget(10000);
+    const res = await signer.signAndExecuteTransactionBlock({ transactionBlock: tx });
+    console.log("[Turn Over Card]", res.effects.status);
 }

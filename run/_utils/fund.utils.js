@@ -1,14 +1,9 @@
+import { provider } from '../provider.js'
+
 export const fund = async (address) => {
-    const res = await (await fetch('http://127.0.0.1:9123/gas', {
-        method: 'POST',
-        body: JSON.stringify({
-            "FixedAmountRequest": {
-                "recipient": address
-            }
-        }),
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })).json()
-    console.log(res.error == null ? 'Successfully funded account' : 'error funding account');
+    return;
+    // const res = await provider.requestSuiFromFaucet("0x" + address)
+    // console.log(res);
+    // console.log(address, " funded!");
+    // console.log(res.error == null ? 'Successfully funded account' : 'error funding account');
 }

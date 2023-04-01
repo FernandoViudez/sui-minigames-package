@@ -1,5 +1,5 @@
 import { provider } from "./provider.js"
-import { Ed25519Keypair, RawSigner, fromB64 } from '@mysten/sui.js';
+import { Ed25519Keypair, RawSigner, fromB64, TransactionArgument, TransactionBlock } from '@mysten/sui.js';
 import { getCoin } from './_utils/coin.utils.js';
 
 /**
@@ -10,19 +10,18 @@ import { getCoin } from './_utils/coin.utils.js';
  * @param {*} betAmount 
  */
 export const join = async (account, packageObjectId, gameBoardObjectId, betAmount) => {
-    const keypair = Ed25519Keypair.fromSeed(fromB64(account.pk).slice(1));
+    const keypair = Ed25519Keypair.deriveKeypair(account.mnemonic, "m/44'/784'/0'/0'/0'");
     const signer = new RawSigner(keypair, provider);
     const coinForBet = await getCoin(account.addr, betAmount, signer);
-    const moveCallTxn = await signer.executeMoveCall({
-        packageObjectId,
-        module: 'memotest',
-        function: 'join',
-        typeArguments: [],
+    const tx = new TransactionBlock();
+    tx.setGasBudget(10000);
+    tx.moveCall({
+        target: `${packageObjectId}::memotest::join`,
         arguments: [
-            gameBoardObjectId,
-            coinForBet
-        ],
-        gasBudget: 10000,
+            tx.pure(gameBoardObjectId),
+            tx.pure(coinForBet)
+        ]
     });
-    console.log("[Join]", moveCallTxn.effects.effects.status);
+    const res = await signer.signAndExecuteTransactionBlock({ transactionBlock: tx });
+    console.log("[Join]", res.effects.status);
 }

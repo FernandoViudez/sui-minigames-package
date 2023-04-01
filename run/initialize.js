@@ -1,8 +1,8 @@
-import { Ed25519Keypair, RawSigner, fromB64 } from '@mysten/sui.js';
+import { Ed25519Keypair, RawSigner, TransactionBlock } from '@mysten/sui.js';
 import { config } from "./config.js";
 import { provider } from "./provider.js";
 
-const keypair = Ed25519Keypair.fromSeed(fromB64(config.DEPLOYER.pk).slice(1));
+const keypair = Ed25519Keypair.deriveKeypair(config.DEPLOYER.mnemonic, "m/44'/784'/0'/0'/0'");
 const signer = new RawSigner(keypair, provider);
 
 /**
@@ -13,17 +13,15 @@ const signer = new RawSigner(keypair, provider);
  * @param {*} betAmount 
 */
 export const initialize = async (packageObjectId, configObjectId, minimumBetAmount) => {
-    const moveCallTxn = await signer.executeMoveCall({
-        packageObjectId,
-        module: 'memotest',
-        function: 'initialize',
-        typeArguments: [],
+    const tx = new TransactionBlock();
+    tx.moveCall({
+        target: `${packageObjectId}::memotest::initialize`,
         arguments: [
-            configObjectId,
-            Number(minimumBetAmount).toString(),
-            config.MEMOTEST_AUTHORIZED_ADDR.addr
-        ],
-        gasBudget: 10000,
-    });
-    console.log("[Initialize]", moveCallTxn.effects.effects.status);
+            tx.pure(configObjectId),
+            tx.pure(minimumBetAmount),
+            tx.pure(config.MEMOTEST_AUTHORIZED_ADDR.addr)
+        ]
+    })
+    const result = await signer.signAndExecuteTransactionBlock({ transactionBlock: tx })
+    console.log("[Initialize] succeed");
 }

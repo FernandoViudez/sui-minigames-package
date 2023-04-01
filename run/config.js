@@ -1,27 +1,23 @@
 export const config = {
     minimumBalanceRequired: 100,
     DEPLOYER: {
-        addr: "0xc648851ec4aa4f9afe6e96dbab2f114208268558",
-        pk: "AJ6VJJ9Lb11Sworh/YwocRr0vxD92CGLwCOU/4TKx2/e",
+        addr: "0x4e2112d9eeea8a70b05e7c5aa9f225cb59b2cebf60f1e42cee105197b87db350",
+        mnemonic: "broccoli place vanish trash frog awful appear injury unusual sleep energy iron ceiling eagle castle equip method guilt rack expect medal humor good coin",
     },
     MEMOTEST_AUTHORIZED_ADDR: {
-        addr: "0xc648851ec4aa4f9afe6e96dbab2f114208268558",
-        pk: "AJ6VJJ9Lb11Sworh/YwocRr0vxD92CGLwCOU/4TKx2/e",
+        addr: "0x2ea9832855cf43c413c9c553826c78095f3ef1f3d345ba8a95ebaf4508ebecc0",
+        mnemonic: "poverty cereal liar insect reopen add orange assault breeze cart curtain leader loan tragic remove pistol brisk arctic juice mix general want uphold goddess",
     },
     GAME_CREATOR: {
-        addr: "0xb44e67e4575adfd0d72a517624281eb2a8f8c9f3",
-        pk: "APTgjHQaLfhcj6O5+sHWRm5Hu+Mu7GEajx2y/pP66YDI"
+        addr: "0x9accc5b31cac1bf9c81eeea5be6d24044070a6ae8462e476a28343d8f9fdc6f5",
+        mnemonic: "actual dress supply warm peanut seven fork loan transfer home lady foam extend frog tooth leopard payment benefit hover cable genre stand brand spoon"
     },
     JOINER_1: {
-        addr: "0xc2298b42da7c7f1af3d4c2b20ee92768a1c3fb2d",
-        pk: "AH7ijMj7j+ymJcv88UqCD7Rbt1MJP/wWiZLQE3oAZyUD"
+        addr: "0x70f879d74ad2f094738025810b23b58b8d98a56e90fbc5cb395dac46da522e5b",
+        mnemonic: "prevent link tourist junk address wisdom pudding lunar vintage sense frost jungle such simple add length amused keen alcohol curve roof risk reward extra"
     },
     JOINER_2: {
-        addr: "0xccafb9b1327f0ee3b52d615b9235e5cc0b8db126",
-        pk: "AM8iZlWgo2/Tk2XH+3E2KXrYVoQNCTe/IQ/B+mRBE9iK"
+        addr: "0xae2b59daba21f796b9aa56224a8e36c590416d769e35921c8540fce9edc19703",
+        mnemonic: "glimpse dentist romance pattern urge weather symbol deliver gaze picture slim average veteran isolate all badge utility bid bench venture solar dove slab setup"
     },
-    // JOINER_3: {
-    //     addr: "0x34d82cf4c1492e71efd69098815e35fdda1d3a98",
-    //     pk: "APfQaszBI6JbOuQ9AJAC4eNlSy0ShSrWZf3bVCpeDB+j"
-    // },
 }
