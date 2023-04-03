@@ -335,7 +335,7 @@ module games::memotest {
             if(player_borrow.addr == sender) {
                 return player_borrow
             };
-            if(i == vector::length(players)) {
+            if(i == (vector::length(players) - 1)) {
                 assert!(true == false, EPlayerNotFound);
                 break
             };
@@ -366,7 +366,7 @@ module games::memotest {
             if(player.can_play) {
                 active_players_amount = active_players_amount + 1;
             };
-            if(vector::length(players) == i) {
+            if(i == (vector::length(players) - 1)) {
                 break
             };
             i = i + 1;
