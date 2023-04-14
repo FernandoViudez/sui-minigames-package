@@ -140,7 +140,7 @@ module games::memotest {
             config: GameConfig {
                 id: object::new(ctx),
                 creator: sender,
-                minimum_bet_amount: config.minimum_bet_amount,
+                minimum_bet_amount: bet_amount,
                 authorized_addr: config.authorized_addr,
             },
         };
@@ -188,7 +188,7 @@ module games::memotest {
 
         let balance = coin::balance_mut(bet);
         let bet_amount = balance::value(balance);
-        assert!(bet_amount >= gameBoard.config.minimum_bet_amount, EInvalidBalance);
+        assert!(bet_amount == gameBoard.config.minimum_bet_amount, EInvalidBalance);
 
         let new_player = Player {
             id: (players_number as u8) + 1,
