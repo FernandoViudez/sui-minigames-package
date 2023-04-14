@@ -33,7 +33,7 @@ export const deploy = async () => {
     const keypair = Ed25519Keypair.deriveKeypair(config.DEPLOYER.mnemonic, "m/44'/784'/0'/0'/0'");
     const signer = new RawSigner(keypair, provider);
     const signerAddress = await signer.getAddress();
-    await fund(signerAddress);
+    // await fund(signerAddress);
     const compiledModulesAndDeps = JSON.parse(
         execSync(
             `sui move build --dump-bytecode-as-base64 --path ./`,
@@ -41,12 +41,11 @@ export const deploy = async () => {
         ),
     );
     const tx = new TransactionBlock();
-    tx.setGasBudget(10000000);
-    const res = tx.publish(
-        compiledModulesAndDeps.modules.map((m) => Array.from(fromB64(m))),
-        compiledModulesAndDeps.dependencies.map((addr) =>
-            normalizeSuiObjectId(addr),
-        ),
+    tx.setGasBudget(200000000);
+    const res = tx.publish({
+        dependencies: compiledModulesAndDeps.dependencies,
+        modules: compiledModulesAndDeps.modules,
+    }
     );
     tx.transferObjects([res], tx.pure(signerAddress));
     const result = await signer.signAndExecuteTransactionBlock({
@@ -56,5 +55,6 @@ export const deploy = async () => {
         }
     });
     console.log("[Deploy] succeed");
+    console.log(result.effects);
     return result.effects.created;
 }
