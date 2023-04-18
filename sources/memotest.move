@@ -248,14 +248,14 @@ module games::memotest {
         };
 
         // change turn
-        update_who_plays(gameBoard, ctx);
+        update_who_plays(gameBoard);
     }
 
     entry fun change_turn(gameBoard: &mut GameBoard, ctx: &mut TxContext) {
         assert!(gameBoard.status == string::utf8(b"playing"), EInvalidActionForCurrentState);
         let sender = tx_context::sender(ctx);
         assert!(gameBoard.config.authorized_addr == sender, EUnauthorized);
-        update_who_plays(gameBoard, ctx);
+        update_who_plays(gameBoard);
     }
     
     entry fun disconnect_player(gameBoard: &mut GameBoard, player_id: u8, ctx: &mut TxContext) {
@@ -268,8 +268,16 @@ module games::memotest {
                 let player = vector::borrow_mut(&mut gameBoard.players, i);
                 if(player.id == player_id) {
                     player.can_play = false;
-                    if(active_players == 2) {
+                    if(
+                        active_players == 2 ||
+                        (
+                            gameBoard.status == string::utf8(b"waiting") && 
+                            player.addr == gameBoard.config.creator
+                        )
+                    ) {
                         gameBoard.status = string::utf8(b"finished");
+                    } else if(gameBoard.who_plays == player.id) {
+                        update_who_plays(gameBoard);
                     };
                     break
                 };
@@ -344,17 +352,16 @@ module games::memotest {
         vector::borrow(players, 0)
     }
 
-    fun update_who_plays(gameBoard: &mut GameBoard, ctx: &mut TxContext) {
-        let sender = tx_context::sender(ctx);
+    fun update_who_plays(gameBoard: &mut GameBoard) {
         assert!(get_active_players_amount(&gameBoard.players) >= 2, EInvalidPlayerQuantity);
         if((gameBoard.who_plays as u64) == vector::length(&gameBoard.players)) {
            gameBoard.who_plays = 1; 
         } else {
             gameBoard.who_plays = gameBoard.who_plays + 1;
         };
-        let player = get_player_from_address(&gameBoard.players, sender);
+        let player = vector::borrow(&gameBoard.players, (gameBoard.who_plays as u64) - 1);
         if(!player.can_play) {
-            update_who_plays(gameBoard, ctx);
+            update_who_plays(gameBoard);
         };
     }
 
