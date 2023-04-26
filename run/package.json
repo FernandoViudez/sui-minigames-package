@@ -11,6 +11,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@mysten/sui.js": "^0.32.1"
+    "@mysten/sui.js": "^0.32.1",
+    "tweetnacl": "^1.0.3"
   }
 }

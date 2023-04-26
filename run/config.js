@@ -1,5 +1,5 @@
 export const config = {
-    minimumBalanceRequired: 100,
+    minimumBalanceRequired: 1,
     DEPLOYER: {
         addr: "0x4e2112d9eeea8a70b05e7c5aa9f225cb59b2cebf60f1e42cee105197b87db350",
         mnemonic: "broccoli place vanish trash frog awful appear injury unusual sleep energy iron ceiling eagle castle equip method guilt rack expect medal humor good coin",

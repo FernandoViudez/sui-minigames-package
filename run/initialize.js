@@ -22,6 +22,10 @@ export const initialize = async (packageObjectId, configObjectId, minimumBetAmou
             tx.pure(config.MEMOTEST_AUTHORIZED_ADDR.addr)
         ]
     })
-    const result = await signer.signAndExecuteTransactionBlock({ transactionBlock: tx })
+    try {
+        const result = await signer.signAndExecuteTransactionBlock({ transactionBlock: tx, }) // options: { showEffects: true }
+    } catch (error) {
+        console.log({ error });
+    }
     console.log("[Initialize] succeed");
 }

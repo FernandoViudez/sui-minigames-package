@@ -9,7 +9,7 @@ const signer = new RawSigner(keypair, provider);
 
 export const newGame = async (packageObjectId, configObjectId, amountToBet) => {
     // split coin of the game creator with the required amount to bet
-    await fund("0x" + keypair.getPublicKey().toSuiAddress());
+    // await fund("0x" + keypair.getPublicKey().toSuiAddress());
     const coinForBet = await getCoin(config.GAME_CREATOR.addr, amountToBet, signer);
     const tx = new TransactionBlock();
     tx.moveCall({
@@ -19,7 +19,7 @@ export const newGame = async (packageObjectId, configObjectId, amountToBet) => {
             tx.pure(coinForBet)
         ]
     })
-    tx.setGasBudget(10000);
+    tx.setGasBudget(100);
     const res = await signer.signAndExecuteTransactionBlock({ transactionBlock: tx });
     return res.effects.created[0].reference.objectId;
 }

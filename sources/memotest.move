@@ -9,6 +9,7 @@ module games::memotest {
     use std::vector;
     use games::prize::{Self, Prize};
     use std::option::{Self, Option};
+    use sui::event;
 
     const EConfigAlreadyInitialized: u64 = 1;
     const EIncorrectMinimumBetAmount: u64 = 2;
@@ -62,6 +63,22 @@ module games::memotest {
         authorized_addr: address,
     }
 
+    struct CardTurnedOver has copy, drop {
+        id: u8,
+        position: u8,
+        image: String,
+    }
+    
+    struct TurnChanged has copy, drop {
+        who_plays: u8
+    }
+
+    struct CardsPerFound has copy, drop {
+        position_1: u8,
+        position_2: u8,
+        finder: address,
+    }
+
     fun init(ctx: &mut TxContext) {
         let sender = tx_context::sender(ctx);
         let config = GameConfig {
@@ -94,18 +111,27 @@ module games::memotest {
         new_location: u8, 
         modify_per: bool, 
         new_image: vector<u8>, 
+        playerId: u8,
         ctx: &mut TxContext
     ) {
         assert!(game.status == string::utf8(b"playing"), EInvalidActionForCurrentState);
+        assert!(game.who_plays == playerId, EUnauthorized);
         let sender = tx_context::sender(ctx);
         assert!(&config.authorized_addr == &sender, EUnauthorized);
         let card_to_update: &mut Card = vector::borrow_mut<Card>(&mut game.cards, (card_id as u64));
         if(modify_per) {
+            assert!(card_to_update.per_location == 0, EUnauthorized);
             card_to_update.per_location = new_location;
         } else {
+            assert!(card_to_update.location == 0, EUnauthorized);
             card_to_update.location = new_location;
         };
         card_to_update.image = string::utf8(new_image);
+        event::emit(CardTurnedOver { 
+            id: card_id,
+            position: new_location,
+            image: card_to_update.image
+        });
     }
 
     entry fun new_game(config: &mut GameConfig, bet: &mut Coin<SUI>, ctx: &mut TxContext) {
@@ -241,8 +267,13 @@ module games::memotest {
             first_card_turned.found_by = sender;
             gameBoard.cards_found = gameBoard.cards_found + 1;
             players_turn.found_amount = players_turn.found_amount + 1;
+            event::emit(CardsPerFound { 
+                position_1: first_card_position,
+                position_2: second_card_position,
+                finder: sender,
+            });
         };
-        
+
         if((gameBoard.cards_found as u64) == TOTAL_CARDS) {
             gameBoard.status = string::utf8(b"finished");
         };
@@ -362,7 +393,11 @@ module games::memotest {
         let player = vector::borrow(&gameBoard.players, (gameBoard.who_plays as u64) - 1);
         if(!player.can_play) {
             update_who_plays(gameBoard);
-        };
+        } else {
+            event::emit(TurnChanged { 
+                who_plays: player.id
+            });
+        }
     }
 
     fun get_active_players_amount(players: &vector<Player>): u64 {
